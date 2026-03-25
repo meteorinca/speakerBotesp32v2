@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speaker Bot</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 900px; padding: 0 1rem; }
+      .card { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+      label { display:block; font-weight: 600; margin: 0.4rem 0; }
+      input, select, button { padding: 0.55rem; margin: 0.25rem 0; }
+      button { cursor: pointer; }
+      .row { display:flex; gap: 1rem; flex-wrap: wrap; }
+      .row > div { flex: 1 1 250px; }
+      pre { background: #111; color: #0f0; padding: 1rem; border-radius: 12px; overflow:auto; }
+    </style>
+  </head>
+  <body>
+    <h1>Speaker Bot</h1>
+
+    <div class="card">
+      <h2>ESP Connection</h2>
+      <label>ESP IP</label>
+      <input id="esp_ip" placeholder="192.168.1.50">
+      <button onclick="connectEsp()">Connect</button>
+    </div>
+
+    <div class="card">
+      <h2>Upload + Playback</h2>
+      <input type="file" id="audio_file" accept="audio/*">
+      <button onclick="uploadAudio()">Upload</button>
+      <div class="row">
+        <div>
+          <label>Codec</label>
+          <select id="codec">
+            <option value="pcm" selected>PCM</option>
+            <option value="opus">Opus (placeholder)</option>
+          </select>
+        </div>
+        <div>
+          <label>Sample rate</label>
+          <select id="sample_rate">
+            <option value="48000" selected>48000</option>
+            <option value="16000">16000</option>
+          </select>
+        </div>
+        <div>
+          <label>Frame ms</label>
+          <select id="frame_ms">
+            <option value="20" selected>20</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="playAudio()">Play</button>
+      <button onclick="stopAudio()">Stop</button>
+      <p id="uploaded_name"></p>
+    </div>
+
+    <div class="card">
+      <h2>Servo + OLED</h2>
+      <label>Servo angle</label>
+      <input id="servo_angle" type="range" min="0" max="180" value="90" oninput="servoValue.textContent=this.value">
+      <span id="servoValue">90</span>
+      <button onclick="setServo()">Set Servo</button>
+
+      <label>OLED line 1</label>
+      <input id="line1" placeholder="Hello">
+      <label>OLED line 2</label>
+      <input id="line2" placeholder="Streaming">
+      <button onclick="setOled()">Set OLED</button>
+    </div>
+
+    <div class="card">
+      <h2>Status</h2>
+      <button onclick="refreshStatus()">Refresh</button>
+      <pre id="status">{}</pre>
+    </div>
+
+    <script>
+      let uploadedName = "";
+
+      async function api(path, options = {}) {
+        const response = await fetch(path, {
+          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+          ...options,
+        });
+        return response.json();
+      }
+
+      async function connectEsp() {
+        const esp_ip = document.getElementById('esp_ip').value.trim();
+        const data = await api('/api/connect', { method: 'POST', body: JSON.stringify({ esp_ip }) });
+        document.getElementById('status').textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function uploadAudio() {
+        const fileInput = document.getElementById('audio_file');
+        if (!fileInput.files.length) return;
+        const form = new FormData();
+        form.append('audio', fileInput.files[0]);
+        const response = await fetch('/api/upload', { method: 'POST', body: form });
+        const data = await response.json();
+        uploadedName = data.filename || '';
+        document.getElementById('uploaded_name').textContent = uploadedName ? `Uploaded: ${uploadedName}` : 'Upload failed';
+      }
+
+      async function playAudio() {
+        const payload = {
+          filename: uploadedName,
+          codec: document.getElementById('codec').value,
+          sample_rate: parseInt(document.getElementById('sample_rate').value, 10),
+          frame_ms: parseInt(document.getElementById('frame_ms').value, 10),
+          bitrate: 32000,
+        };
+        const data = await api('/api/play', { method: 'POST', body: JSON.stringify(payload) });
+        document.getElementById('status').textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function stopAudio() {
+        const data = await api('/api/stop', { method: 'POST', body: JSON.stringify({}) });
+        document.getElementById('status').textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function setServo() {
+        const angle = parseInt(document.getElementById('servo_angle').value, 10);
+        const data = await api('/api/servo', { method: 'POST', body: JSON.stringify({ angle }) });
+        document.getElementById('status').textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function setOled() {
+        const line1 = document.getElementById('line1').value;
+        const line2 = document.getElementById('line2').value;
+        const data = await api('/api/oled', { method: 'POST', body: JSON.stringify({ line1, line2 }) });
+        document.getElementById('status').textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function refreshStatus() {
+        const response = await fetch('/api/status');
+        const data = await response.json();
+        document.getElementById('status').textContent = JSON.stringify(data, null, 2);
+      }
+
+      refreshStatus();
+    </script>
+  </body>
+</html>
