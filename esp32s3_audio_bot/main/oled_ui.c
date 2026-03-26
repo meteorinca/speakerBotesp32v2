@@ -116,3 +116,23 @@ void oled_ui_set_text(const char *line1, const char *line2) {
     }
     ESP_LOGI(TAG, "OLED Updated: %s | %s", lines[0], lines[1]);
 }
+
+extern const uint8_t geminieyes_bin_start[] asm("_binary_geminieyes_bin_start");
+extern const uint8_t geminieyes_bin_end[]   asm("_binary_geminieyes_bin_end");
+
+void oled_ui_draw_eyes(void) {
+    size_t len = geminieyes_bin_end - geminieyes_bin_start;
+    if (len != 1024) {
+        ESP_LOGE(TAG, "Invalid geminieyes.bin length: %d", len);
+        return;
+    }
+    for (int y = 0; y < 8; y++) {
+        send_cmd(0xB0 + y);
+        send_cmd(0x00);
+        send_cmd(0x10);
+        const uint8_t *row_data = &geminieyes_bin_start[y * 128];
+        for (int x = 0; x < 128; x++) {
+            send_data(row_data[x]);
+        }
+    }
+}

@@ -9,5 +9,6 @@ idf_component_register(
         "oled_ui.c"
         "servo_ctrl.c"
     INCLUDE_DIRS "."
-    REQUIRES freertos cjson esp_http_server esp_event esp_wifi esp_netif esp_ringbuf esp_driver_ledc esp_driver_i2s esp_driver_i2c nvs_flash
+    EMBED_FILES "geminieyes.bin"
+    REQUIRES freertos cjson esp_http_server esp_event esp_wifi esp_netif esp_ringbuf esp_driver_ledc esp_driver_i2s esp_driver_i2c esp_timer nvs_flash
 )

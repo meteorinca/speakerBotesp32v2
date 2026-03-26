@@ -5,7 +5,8 @@
 #include "cJSON.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
-#include <sys/param.h>  
+#include <sys/param.h>
+#include "esp_timer.h"
 
 
 static const char *TAG = "http_control";
@@ -43,6 +44,7 @@ static esp_err_t status_get_handler(httpd_req_t *req) {
     cJSON_AddNumberToObject(json, "servo_angle", state->servo_angle);
     cJSON_AddStringToObject(json, "oled_line1", state->oled_line1);
     cJSON_AddStringToObject(json, "oled_line2", state->oled_line2);
+    state->last_status_req = (uint32_t)(esp_timer_get_time() / 1000ULL);
     return send_json(req, json);
 }
 
@@ -76,6 +78,7 @@ static esp_err_t oled_post_handler(httpd_req_t *req) {
     snprintf(state->oled_line1, sizeof(state->oled_line1), "%s", cJSON_IsString(line1) ? line1->valuestring : "");
     snprintf(state->oled_line2, sizeof(state->oled_line2), "%s", cJSON_IsString(line2) ? line2->valuestring : "");
     oled_ui_set_text(state->oled_line1, state->oled_line2);
+    state->last_text_req = (uint32_t)(esp_timer_get_time() / 1000ULL);
     cJSON_Delete(json);
     cJSON *out = cJSON_CreateObject();
     cJSON_AddBoolToObject(out, "ok", true);

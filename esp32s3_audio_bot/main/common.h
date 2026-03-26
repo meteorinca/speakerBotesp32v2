@@ -36,6 +36,8 @@ typedef struct {
     char oled_line1[32];
     char oled_line2[32];
     char ip[16];
+    uint32_t last_status_req;
+    uint32_t last_text_req;
 } app_state_t;
 
 typedef struct __attribute__((packed)) {
@@ -61,3 +63,4 @@ void servo_ctrl_init(void);
 void servo_ctrl_set_angle(int angle);
 void oled_ui_init(void);
 void oled_ui_set_text(const char *line1, const char *line2);
+void oled_ui_draw_eyes(void);
