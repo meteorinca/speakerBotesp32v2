@@ -73,6 +73,15 @@ class SpeakerBotStreamer:
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
 
+    def get_mic(self):
+        try:
+            response = requests.get(self._url("/mic"), timeout=2)
+            response.raise_for_status()
+            return {"ok": True, "esp": response.json()}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+
     def stop(self):
         self._stop_event.set()
         if self._thread and self._thread.is_alive():

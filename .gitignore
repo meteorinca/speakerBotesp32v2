@@ -8,3 +8,5 @@ dist/
 sdkconfig
 .DS_Store
 uploads/
+secrets.h
+managed_components

@@ -72,10 +72,17 @@
     </div>
 
     <div class="card">
+      <h2>Mic Check</h2>
+      <button onclick="checkMic()">Check Mic</button>
+      <pre id="mic_status">{}</pre>
+    </div>
+
+    <div class="card">
       <h2>Status</h2>
       <button onclick="refreshStatus()">Refresh</button>
       <pre id="status">{}</pre>
     </div>
+
 
     <script>
       let uploadedName = "";
@@ -140,6 +147,12 @@
         const data = await response.json();
         document.getElementById('status').textContent = JSON.stringify(data, null, 2);
       }
+
+      async function checkMic() {
+        const data = await api('/api/mic');
+        document.getElementById('mic_status').textContent = JSON.stringify(data, null, 2);
+      }
+
 
       refreshStatus();
     </script>

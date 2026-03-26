@@ -84,6 +84,12 @@ def api_oled():
     return jsonify(streamer.set_oled(payload.get("line1", ""), payload.get("line2", "")))
 
 
+@app.route("/api/mic", methods=["GET"])
+def api_mic():
+    return jsonify(streamer.get_mic())
+
+
+
 @app.route("/uploads/<path:name>")
 def uploads(name: str):
     return send_from_directory(app.config["UPLOAD_FOLDER"], name)

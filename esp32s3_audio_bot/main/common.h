@@ -3,8 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define WIFI_SSID "YOUR_WIFI_SSID"
-#define WIFI_PASS "YOUR_WIFI_PASSWORD"
+#include "secrets.h"
 
 #define LED_PIN 48
 #define SERVO_PIN 18
@@ -56,6 +55,8 @@ void audio_udp_set_stream(bool enabled, uint16_t udp_port, const char *codec, ui
 void audio_pipeline_push_pcm(const uint8_t *data, uint16_t len);
 void audio_i2s_init(void);
 void audio_i2s_play_pcm(const uint8_t *data, size_t len);
+int audio_mic_get_amplitude(void);
+struct app_state_t;
 void servo_ctrl_init(void);
 void servo_ctrl_set_angle(int angle);
 void oled_ui_init(void);

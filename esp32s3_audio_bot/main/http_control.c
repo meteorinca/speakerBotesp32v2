@@ -5,6 +5,8 @@
 #include "cJSON.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
+#include <sys/param.h>  
+
 
 static const char *TAG = "http_control";
 
@@ -114,6 +116,13 @@ static esp_err_t stream_stop_post_handler(httpd_req_t *req) {
     return send_json(req, out);
 }
 
+static esp_err_t mic_get_handler(httpd_req_t *req) {
+    int amp = audio_mic_get_amplitude();
+    cJSON *out = cJSON_CreateObject();
+    cJSON_AddNumberToObject(out, "amplitude", amp);
+    return send_json(req, out);
+}
+
 void http_control_start(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     httpd_handle_t server = NULL;
@@ -128,6 +137,7 @@ void http_control_start(void) {
         {.uri = "/oled", .method = HTTP_POST, .handler = oled_post_handler, .user_ctx = NULL},
         {.uri = "/stream/start", .method = HTTP_POST, .handler = stream_start_post_handler, .user_ctx = NULL},
         {.uri = "/stream/stop", .method = HTTP_POST, .handler = stream_stop_post_handler, .user_ctx = NULL},
+        {.uri = "/mic", .method = HTTP_GET, .handler = mic_get_handler, .user_ctx = NULL},
     };
 
     for (size_t i = 0; i < sizeof(routes) / sizeof(routes[0]); ++i) {
