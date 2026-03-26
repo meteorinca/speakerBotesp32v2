@@ -3,90 +3,150 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Speaker Bot</title>
+    <title>SpeakerBot Control Terminal</title>
     <style>
-      body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 900px; padding: 0 1rem; }
-      .card { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
-      label { display:block; font-weight: 600; margin: 0.4rem 0; }
-      input, select, button { padding: 0.55rem; margin: 0.25rem 0; }
-      button { cursor: pointer; }
-      .row { display:flex; gap: 1rem; flex-wrap: wrap; }
-      .row > div { flex: 1 1 250px; }
-      pre { background: #111; color: #0f0; padding: 1rem; border-radius: 12px; overflow:auto; }
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+      
+      :root {
+        --primary: #00f3ff;
+        --secondary: #ff007f;
+        --bg-color: #0d0f1a;
+        --text: #e2e8f0;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+      }
+
+      * { box-sizing: border-box; }
+
+      body { 
+        font-family: 'Outfit', sans-serif; 
+        margin: 0; padding: 2rem 1rem; 
+        background: radial-gradient(circle at top right, #1a1631, var(--bg-color) 80%);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .container { max-width: 960px; margin: 0 auto; display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+      @media (min-width: 768px) { .container { grid-template-columns: 1fr 1fr; } }
+      .header { grid-column: 1 / -1; text-align: center; margin-bottom: 1rem; }
+      .header h1 { font-size: 3rem; margin: 0; font-weight: 800; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      
+      .card { 
+        background: var(--glass-bg); 
+        backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border); 
+        border-radius: 24px; 
+        padding: 1.8rem; 
+        box-shadow: var(--glass-shadow);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .card:hover { transform: translateY(-4px); box-shadow: 0 12px 48px 0 rgba(0,f3,ff,0.1); }
+      .card.full { grid-column: 1 / -1; }
+
+      h2 { font-weight: 600; font-size: 1.4rem; margin-top: 0; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.8rem; }
+      
+      label { display: block; font-weight: 400; margin: 0.8rem 0 0.4rem; color: #a0aec0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      input, select { 
+        width: 100%; padding: 0.8rem 1rem; 
+        background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); 
+        color: var(--text); border-radius: 12px; outline: none; transition: border-color 0.2s; 
+        font-family: 'Outfit', sans-serif;
+      }
+      input:focus, select:focus { border-color: var(--primary); }
+      input[type="range"] { padding: 0; background: transparent; }
+      
+      .btn-group { display: flex; gap: 0.8rem; margin-top: 1rem; flex-wrap: wrap; }
+      button { 
+        background: rgba(255,255,255,0.05); color: var(--text); 
+        border: 1px solid var(--glass-border); border-radius: 12px; 
+        padding: 0.8rem 1.4rem; font-weight: 600; cursor: pointer; 
+        transition: all 0.2s; font-family: 'Outfit', sans-serif;
+        flex: 1; text-align: center;
+      }
+      button:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); }
+      button.primary { background: linear-gradient(135deg, #00f3ff, #0088ff); color: #000; border: none; box-shadow: 0 0 15px rgba(0,243,255,0.4); }
+      button.primary:hover { box-shadow: 0 0 25px rgba(0,243,255,0.7); color: #fff; }
+      button.danger { background: linear-gradient(135deg, #ff007f, #aa0044); color: #fff; border: none; }
+
+      pre { background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 12px; overflow: auto; font-size: 0.85rem; border: 1px solid var(--glass-border); color: #00f3ff; font-family: 'Courier New', monospace; }
+      
+      .wave-container { position: relative; width: 100%; height: 180px; border-radius: 16px; overflow: hidden; background: rgba(0,0,0,0.4); margin-top: 1rem; border: 1px solid var(--glass-border); }
+      canvas { width: 100%; height: 100%; display: block; }
+      .mic-val { position: absolute; top: 1rem; left: 1rem; font-size: 2rem; font-weight: 800; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
     </style>
   </head>
   <body>
-    <h1>Speaker Bot</h1>
+    <div class="container">
+      <div class="header">
+        <h1>SpeakerBot Studio</h1>
+      </div>
 
-    <div class="card">
-      <h2>ESP Connection</h2>
-      <label>ESP IP</label>
-      <input id="esp_ip" placeholder="192.168.1.50">
-      <button onclick="connectEsp()">Connect</button>
-    </div>
-
-    <div class="card">
-      <h2>Upload + Playback</h2>
-      <input type="file" id="audio_file" accept="audio/*">
-      <button onclick="uploadAudio()">Upload</button>
-      <div class="row">
-        <div>
-          <label>Codec</label>
-          <select id="codec">
-            <option value="pcm" selected>PCM</option>
-            <option value="opus">Opus (placeholder)</option>
-          </select>
-        </div>
-        <div>
-          <label>Sample rate</label>
-          <select id="sample_rate">
-            <option value="48000" selected>48000</option>
-            <option value="16000">16000</option>
-          </select>
-        </div>
-        <div>
-          <label>Frame ms</label>
-          <select id="frame_ms">
-            <option value="20" selected>20</option>
-            <option value="10">10</option>
-          </select>
+      <div class="card">
+        <h2>🌐 ESP Connection</h2>
+        <label>ESP IP Address</label>
+        <div class="btn-group">
+          <input id="esp_ip" placeholder="192.168.1.50" style="flex:2">
+          <button class="primary" onclick="connectEsp()">Connect</button>
         </div>
       </div>
-      <button onclick="playAudio()">Play</button>
-      <button onclick="stopAudio()">Stop</button>
-      <p id="uploaded_name"></p>
+
+      <div class="card">
+        <h2>⚙️ Status Feed</h2>
+        <button onclick="refreshStatus()">Refresh Sensor Data</button>
+        <pre id="status">{}</pre>
+      </div>
+
+      <div class="card full">
+        <h2>🎙️ Realtime Mic Visualizer</h2>
+        <div class="btn-group" style="margin-top:0">
+          <button onclick="toggleMic()" id="micBtn" class="primary">Start Mic Stream</button>
+        </div>
+        <div class="wave-container">
+          <div class="mic-val" id="mic-val">0</div>
+          <canvas id="waveCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🎵 Audio Player</h2>
+        <label>Upload Audio File</label>
+        <div class="btn-group">
+          <input type="file" id="audio_file" accept="audio/*">
+          <button onclick="uploadAudio()" class="primary">Upload</button>
+        </div>
+        <p id="uploaded_name" style="margin-top:0.5rem; font-size:0.8rem; color:var(--primary);"></p>
+
+        <div class="btn-group">
+          <div style="flex:1"><label>Sample Rate</label><select id="sample_rate"><option value="48000" selected>48000 Hz</option><option value="16000">16000 Hz</option></select></div>
+          <div style="flex:1"><label>Frame ms</label><select id="frame_ms"><option value="20" selected>20 ms</option><option value="10">10 ms</option></select></div>
+          <input type="hidden" id="codec" value="pcm">
+        </div>
+        <div class="btn-group">
+          <button class="primary" onclick="playAudio()">▶ Play Stream</button>
+          <button class="danger" onclick="stopAudio()">■ Stop</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🤖 Hardware Controls</h2>
+        <label>Servo Angle Target</label>
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <input id="servo_angle" type="range" min="0" max="180" value="90" oninput="document.getElementById('servoValue').textContent=this.value+'°'" style="flex:1">
+          <span id="servoValue" style="font-weight:800; min-width:3rem">90°</span>
+        </div>
+        <button onclick="setServo()" style="width:100%; margin-top:0.5rem">Actuate Servo</button>
+
+        <label style="margin-top:1.5rem">OLED Line 1</label>
+        <input id="line1" placeholder="Hello">
+        <label>OLED Line 2</label>
+        <input id="line2" placeholder="Streaming">
+        <button onclick="setOled()" style="width:100%; margin-top:0.5rem" class="primary">Draw to OLED</button>
+      </div>
     </div>
-
-    <div class="card">
-      <h2>Servo + OLED</h2>
-      <label>Servo angle</label>
-      <input id="servo_angle" type="range" min="0" max="180" value="90" oninput="servoValue.textContent=this.value">
-      <span id="servoValue">90</span>
-      <button onclick="setServo()">Set Servo</button>
-
-      <label>OLED line 1</label>
-      <input id="line1" placeholder="Hello">
-      <label>OLED line 2</label>
-      <input id="line2" placeholder="Streaming">
-      <button onclick="setOled()">Set OLED</button>
-    </div>
-
-    <div class="card">
-      <h2>Mic Check</h2>
-      <button onclick="checkMic()">Check Mic</button>
-      <pre id="mic_status">{}</pre>
-    </div>
-
-    <div class="card">
-      <h2>Status</h2>
-      <button onclick="refreshStatus()">Refresh</button>
-      <pre id="status">{}</pre>
-    </div>
-
 
     <script>
       let uploadedName = "";
-
       async function api(path, options = {}) {
         const response = await fetch(path, {
           headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
@@ -113,9 +173,9 @@
       }
 
       async function playAudio() {
+        if(!uploadedName) { alert("Please upload an audio file first."); return; }
         const payload = {
-          filename: uploadedName,
-          codec: document.getElementById('codec').value,
+          filename: uploadedName, codec: 'pcm',
           sample_rate: parseInt(document.getElementById('sample_rate').value, 10),
           frame_ms: parseInt(document.getElementById('frame_ms').value, 10),
           bitrate: 32000,
@@ -143,17 +203,71 @@
       }
 
       async function refreshStatus() {
-        const response = await fetch('/api/status');
-        const data = await response.json();
+        const data = await api('/api/status');
         document.getElementById('status').textContent = JSON.stringify(data, null, 2);
       }
 
-      async function checkMic() {
-        const data = await api('/api/mic');
-        document.getElementById('mic_status').textContent = JSON.stringify(data, null, 2);
+      // Fancy Wave Visualizer
+      const canvas = document.getElementById('waveCanvas');
+      const ctx = canvas.getContext('2d');
+      let currentAmp = 0;
+      let targetAmp = 0;
+      let phase = 0;
+      let micInterval = null;
+
+      function resize() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      async function pollMic() {
+        try {
+          const data = await api('/api/mic');
+          targetAmp = data.esp && data.esp.amplitude ? data.esp.amplitude : 0;
+          document.getElementById('mic-val').textContent = targetAmp.toString();
+        } catch(e) {}
       }
 
+      function toggleMic() {
+        const btn = document.getElementById('micBtn');
+        if (micInterval) {
+          clearInterval(micInterval);
+          micInterval = null;
+          targetAmp = 0;
+          btn.textContent = "Start Mic Stream";
+        } else {
+          micInterval = setInterval(pollMic, 80);
+          btn.textContent = "Stop Mic Stream";
+        }
+      }
 
+      function drawWave() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        currentAmp += (targetAmp - currentAmp) * 0.15;
+        const normalizedAmp = Math.min(1, currentAmp / 3500) * (canvas.height / 2.5);
+        
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x++) {
+          const y = canvas.height / 2 + Math.sin(x * 0.03 + phase) * normalizedAmp * Math.sin((x / canvas.width) * Math.PI);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        
+        ctx.strokeStyle = '#00f3ff';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00f3ff';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        
+        phase -= 0.12;
+        requestAnimationFrame(drawWave);
+      }
+      drawWave();
       refreshStatus();
     </script>
   </body>
